@@ -1,4 +1,4 @@
-// Error-Handling
+// Error-Handling Middleware
 
 // handle 404 errors
 exports.error404 = (req, res, next) => {

@@ -2,7 +2,7 @@
 
 // imports
 const mysql = require('mysql');
-const queries = require('./queries/tasks.queries');
+const queries = require('./queries/testing.queries');
 
 // host
 const host = process.env.DB_HOST || 'localhost';
@@ -11,10 +11,10 @@ const host = process.env.DB_HOST || 'localhost';
 const user = process.env.DB_USER || 'root';
 
 // user password
-const password = process.env.DB_PASSWORD || 'sesame';
+const password = process.env.DB_PASSWORD || 'password';
 
 // database name
-const database = process.env.DB_NAME || 'toDoDB';
+const database = process.env.DB_NAME || 'testingDB';
 
 // create connection
 const con = mysql.createConnection ({
@@ -30,7 +30,7 @@ con.connect(function (err) {
     if (err) throw err;
     console.log('db connection established');
     
-    con.query(queries.CREATE_TASKS_TABLE, function (err, result) {
+    con.query(queries.CREATE_TESTING_TABLE, function (err, result) {
         if (err) throw err;
         console.log('table created (or already exists)');
     });

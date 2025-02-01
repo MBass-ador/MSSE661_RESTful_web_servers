@@ -3,7 +3,7 @@ const express = require("express");
 const logger = require("morgan");
 const bodyParser = require("body-parser");
 
-const tasksRoutes = require("./routes/tasks.routes");
+const testRoutes = require("./routes/testing.routes");
 const middleware = require("./middleware/errors.middleware");
 
 
@@ -20,8 +20,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 
-// Routes http://localhost:3000/tasks
-app.use('tasks', tasksRoutes);
+// Routes http://localhost:3000/testing
+app.use('testing', testRoutes);
 
 // handle errors via middleware
 app.use(middleware.error404);
