@@ -16,7 +16,7 @@ exports.getAllTests = function (req, res) {
 
 // Get One
 exports.getTest = function (req, res) {
-    con.query(queries.SINGLE_TEST, [req.params.testID], function (err, result) {
+    con.query(queries.SINGLE_TEST, [req.params.id], function (err, result) {
         if (err) {
             res.send(err);
         }
@@ -40,7 +40,7 @@ exports.createTest = function (req, res) {
 exports.updateTest = function (req, res) {
     con.query(
         queries.UPDATE_TEST, 
-        [req.body.name, req.body.status, req.params.testID], 
+        [req.body.name, req.body.status, req.params.id], 
         function (err, data) {
             if (err) {
                 res.send(err);
@@ -52,7 +52,7 @@ exports.updateTest = function (req, res) {
 
 // Delete
 exports.deleteTest = function (req, res) {
-    con.query(queries.DELETE_TEST, [req.params.testID], function (err) {
+    con.query(queries.DELETE_TEST, [req.params.id], function (err) {
         if (err) {
             res.send(err);
         }

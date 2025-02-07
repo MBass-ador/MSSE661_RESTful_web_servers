@@ -11,9 +11,9 @@ testRoutes.get('/', controllers.getAllTests).post('/', controllers.createTest);
 
 // routes by testID.  `/tests/:testID`
 testRoutes
-    .get('/:testID', controllers.getTest)
-    .put('/:testID', controllers.updateTest)
-    .delete('/:testID', controllers.deleteTest);
+    .get('/:id', controllers.getTest)
+    .put('/:id', controllers.updateTest)
+    .delete('/:id', controllers.deleteTest);
 
 // exporting routes
 module.exports = testRoutes;
