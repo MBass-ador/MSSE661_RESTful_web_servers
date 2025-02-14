@@ -2,51 +2,65 @@
 
 // imports
 const mysql = require('mysql2'); // using mysql2 (bug fix) npm client
-const TestQueries = require('./queries/testing.queries');
-const authQueries = require('./queries/auth.queries');
+const CREATE_TESTING_TABLE = require('./queries/testing.queries');
+const CREATE_USERS_TABLE = require('./queries/auth.queries');
+const query = require('./utils/query');
 
 // host
 const host = process.env.DB_HOST || 'localhost';
-
 // user
 const user = process.env.DB_USER || 'root';
-
 // user password
-const password = process.env.DB_PASSWORD || 'sesame';
-
+const password = process.env.DB_PASS || 'sesame';
 // database name
-const database = process.env.DB_NAME || 'testDB';
+const database = process.env.DB_DATABASE || 'testDB';
 
-// create connection
-const con = mysql.createConnection ({
-    host,
-    user,
-    password,
-    database
-});
+// create connection and wrap in a promise
+const connection = async () => 
+    // wrap connection in promise
+    new Promise((resolve, reject) => {
+        // make connection
+        const con = mysql.createConnection ({
+            host,
+            user,
+            password,
+            database
+        });
 
-
-// connect to testing db
-con.connect(function (err) {
-    if (err) throw err;
-    console.log('db connection established');
-    
-    con.query(TestQueries.CREATE_TESTING_TABLE, function (err, result) {
-        if (err) throw err;
-        console.log('testing table created (or already exists)');
+        con.connect((err) => {
+            if (err) {
+                reject(err);
+                return;
+            } 
+        });
+        
+        resolve(con);
     });
-});
+    // make connection
+    (async () => {
+        const _con = await connection().catch((err) => {
+            throw err;
+        });
 
-// connect to authorization db
-con.connect(function (err) {
-    if (err) throw err;
-    console.log('db connection established');
-    
-    con.query(authQueries.CREATE_USERS_TABLE, function (err, result) {
-        if (err) throw err;
-        console.log('users table created (or already exists)');
-    });
-});
+    // create users table if doesn't exist
+    const userTableCreated = await query(_con, CREATE_USERS_TABLE).catch(
+        (err) => {
+            console.log(err);
+        }
+    );
 
-// export connection as "con"
-module.exports = con;
+    // create testing table if doesn't exist
+    const testingTableCreated = await query(_con, CREATE_TESTING_TABLE).catch(
+        (err) => {
+            console.log(err);
+        }
+    );
+
+    // make sure tables exist
+    if (!!userTableCreated && !!testingTableCreated) {
+        console.log('user and testing tables ready to use');
+    }
+})();
+
+// export connection
+module.exports = connection;

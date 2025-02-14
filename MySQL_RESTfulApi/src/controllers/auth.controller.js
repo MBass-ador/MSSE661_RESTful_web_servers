@@ -1,111 +1,150 @@
-const jwt = require('jsonwebtoken');
+//imports
 const bcrypt = require('bcryptjs');
 
-const con = require('../db-config');
-const jwtconfig = require('../jwt-config');
-const authQueries = require('../queries/auth.queries');
-const userQueries = require('../queries/user.queries');
+const connection = require('../db-config');
 
-// set up new user
-exports.registerUser = function(req, res) {
-    const passwordHash = bcrypt.hashSync(req.body.password);
-  
-    con.query(
-      authQueries.INSERT_NEW_USER,
-      [req.body.username, req.body.email, passwordHash],
-      function(err, result) {
-        if (err) {
-          //   stop registeration
-          console.log(err);
-          res
-            .status(500)
-            .send({ msg: 'Unable to register user. Please try again.' });
-        }
-        // check if created corectly
-        con.query(userQueries.GET_USER_BY_NAME, [req.body.username], function(
-          err,
-          user
-        ) {
-          if (err) {
-            res.status(500);
-            res.send({ msg: 'Unable to retrieve user.' });
-          }
-  
-          console.log(user);
-          res.send(user);
-        });
-      }
-    );
-  };
+const {INSERT_NEW_USER} = require('../queries/auth.queries');
 
-// log in user
-exports.login = function(req, res) {
-    // check user exists
-    console.log(req.body);
-    con.query(
-      userQueries.GET_USER_WITH_PASSWORD_BY_NAME,
-      [req.body.username],
-      function(err, user) {
-        if (err) {
-          res.status(500);
-          res.send({ msg: 'Could not retrieve user.' });
-        }
-  
-        console.log(user);
-        //   validate entered password from database saved password (decrypted with secret)
-        bcrypt
-          .compare(req.body.password, user[0].password)
-          .then(function(validPass) {
-            if (!validPass) {
-              res.status(400).send({ msg: 'Invalid Password.' });
-            }
-            //   create token
-            const token = jwt.sign({ id: user[0].user_id }, jwtconfig.secret);
-            res
-              .header('auth-token', token) 
-              .send({ auth: true, msg: 'Log in Successful.' });
-          })
-          .catch(console.log);
-      }
-    );
-  };
+const {
+  GET_USER_BY_NAME,
+  GET_USER_WITH_PASSWORD_BY_NAME
+} = require('../queries/user.queries');
 
-// update user details
-exports.updateUser = function(req, res) {
-    // check if user exists
-    console.log(req.user);
-    con.query(
-      userQueries.GET_USER_WITH_PASSWORD_BY_ID,
-      [req.user.id],
-      function(err, user) {
-        console.log(err, user);
-        if (err) {
-          res.status(500);
-          res.send({ msg: 'Could not retrieve user.' });
-        }
-  
-        console.log(user);
-        console.log(req.body.username);
-        console.log(req.body.password);
-  
-        const hashedPassword = bcrypt.hashSync(req.body.password);
-  
-        // perform update
-        con.query(
-          authQueries.UPDATE_USER,
-          [req.body.username, req.body.email, hashedPassword, user[0].id],
-          function(err, result) {
-            if (err) {
-              console.log(err);
-              res.status(500).send({ msg: 'Could not update user settings.' });
-            }
-            
-            // confirm update
-            console.log(result);
-            res.json({ msg: 'User details updated succesfully!' });
-          }
-        );
-      }
-    );
-  };
-  
+const query = require('../utils/query');
+
+const {
+  refreshTokens,
+  generateAccessToken,
+  generateRefreshToken,
+} = require('../utils/jwt-helpers');
+
+// function to set up new user
+exports.register = async (req, res) => {
+  // set parameters
+  const passwordHash = bcrypt.hashSync(req.body.password);
+  const params = [req.body.username, req.body.email, passwordHash];
+
+  // make connection
+  const con = await connection().catch((err) => {
+    throw err;
+  });
+
+  // check if user already exists
+  const user = await query(con, GET_USER_BY_NAME, [req.body.username]).catch(
+    (err) => {
+      res.status(500);
+      res.send({ msg: 'unable to retrieve user.' });
+    }
+  );
+
+  // if single response
+  if (user.length === 1) {
+    res.status(403).send({ msg: 'user already exists' });
+  } else {
+    // add new user
+    const result = await query(con, INSERT_NEW_USER, params).catch((err) => {
+      //   stop registeration
+      res
+        .status(500)
+        .send({ msg: 'unable to register user, please try again' });
+    });
+
+    if (result.length) {
+    res.send({ msg: 'new user created' });
+    }
+  }
+};
+
+// function to log in user
+exports.login = async (req, res) => {
+  // establish a connection
+  const con = await connection().catch((err) => {
+    throw err;
+  });
+
+  // check for existing user first
+  const user = await query(con, GET_USER_WITH_PASSWORD_BY_NAME, [
+    req.body.username,
+  ]).catch((err) => {
+    res.status(500);
+    res.send({ msg: 'unable to retrieve user' });
+  });
+
+  // if the user exists
+  if (user.length === 1) {
+    //   compare entered password with saved password from db
+    const validPass = await bcrypt
+      .compare(req.body.password, user[0].password)
+      .catch((err) => {
+        res.json(500).json({ msg: 'invalid password!' });
+      });
+
+    if (!validPass) {
+      res.status(400).send({ msg: 'invalid password!' });
+    }
+    // create token
+    const accessToken = generateAccessToken(user[0].user_id, {
+      // {id: 1, iat: wlenfwekl, expiredIn: 9174323 }
+      expiresIn: 86400,
+    });
+    const refreshToken = generateRefreshToken(user[0].user_id, {
+      expiresIn: 86400,
+    });
+
+    refreshTokens.push(refreshToken);
+
+    res
+      .header('access_token', accessToken) // ex.: { 'aut-token': 'lksnenha0en4tnoaeiwnlgn3o4i'}
+      .send({
+        auth: true,
+        msg: 'logged in',
+        token_type: 'bearer',
+        access_token: accessToken,
+        expires_in: 86400,
+        refresh_token: refreshToken,
+      });
+  }
+};
+
+// function to refresh access token
+exports.token = (req, res) => {
+  const refreshToken = req.body.token;
+
+   // stop user auth validation if no token
+   if (!refreshToken) {
+    res
+      .status(401)
+      .send({ auth: false, msg: 'access denied, no valid refresh token.' });
+  }
+
+  // stop refresh if refresh token invalid
+  if (!refreshTokens.includes(refreshToken)) {
+    res.status(403).send({ msg: 'invalid refresh token' });
+  }
+
+  const verified = verifyToken(refreshToken, jwtconfig.refresh, req, res);
+
+  if (verified) {
+    const accessToken = generateToken(user[0].user_id, { expiresIn: 86400 });
+    res
+      .header('access_token', accessToken) // ex.: { 'aut-token': 'lksnenha0en4tnoaeiwnlgn3o4i'}
+      .send({
+        auth: true,
+        msg: 'logged in',
+        token_type: 'bearer',
+        access_token: accessToken,
+        expires_in: 20,
+        refresh_token: refreshToken,
+      });
+  }
+  res.status(403).send({ msg: 'invalid token' });
+};
+
+// function to log out user
+exports.logout = (req, res) => {
+  const refreshToken = req.body.token;
+  // remove token from refreshTokens
+  refreshTokens = refreshTokens.filter((t) => t !== refreshToken);
+
+  res.send({ msg: 'logout successful' });
+};
