@@ -15,7 +15,7 @@ const {
 } = require("./middleware/errors.middleware");
 
 
-// set up app  port: 3000  logLevel: dev
+// set up app w express  port: 3000  logLevel: dev
 const app = express();
 port = process.env.PORT || 3000;
 const logLevel = process.env.LOG_LEVEL || "dev";
@@ -39,7 +39,7 @@ app.use('/api/auth', authRoutes);      // http://localhost:3000/api/auth
 app.use('/api/users', userRoutes);    // http://localhost:3000/api/users
 app.use('/api/testing', testRoutes); // http://localhost:3000/api/testing
 
-// handle errors via middleware
+// handle certain errors via middleware
 app.use(error404);
 app.use(error500);
 
