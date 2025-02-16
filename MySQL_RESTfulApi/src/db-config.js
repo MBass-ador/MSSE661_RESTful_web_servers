@@ -2,8 +2,8 @@
 
 // imports
 const mysql = require('mysql2'); // using mysql2 (bug fix) npm client
-const CREATE_TESTING_TABLE = require('./queries/testing.queries');
-const CREATE_USERS_TABLE = require('./queries/auth.queries');
+const { CREATE_TESTING_TABLE } = require('./queries/testing.queries');
+const { CREATE_USERS_TABLE } = require('./queries/auth.queries');
 const query = require('./utils/query');
 
 // host
