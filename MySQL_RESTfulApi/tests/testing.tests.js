@@ -58,7 +58,7 @@ describe('Testing API Service', function () {
           expect(resp.body).to.be.eql(expected);
           done();
         });
-    });
+    }); 
 
     // update
     it('should PUT a single test', function (done) {

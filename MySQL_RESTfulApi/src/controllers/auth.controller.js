@@ -50,7 +50,7 @@ exports.register = async (req, res) => {
     });
 
     if (result.length) {
-    res.send({ msg: 'new user created' });
+      res.send({ msg: 'new user created' });
     }
   }
 };

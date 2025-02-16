@@ -19,7 +19,7 @@ const database = process.env.DB_DATABASE || 'testDB';
 const connection = async () => 
     // wrap connection in promise
     new Promise((resolve, reject) => {
-        // make connection
+        // define connection
         const con = mysql.createConnection ({
             host,
             user,
