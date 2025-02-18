@@ -1,4 +1,4 @@
-// Defing SQL queries for mysql database
+// Defing SQL queries for mysql database: "testing"
 
 // create a table "tests" 
 // with id(pk), name, created_date, and status columns
