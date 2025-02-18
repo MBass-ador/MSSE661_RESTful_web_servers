@@ -5,14 +5,15 @@ const {
 
 module.exports = (req, res, next) => {
   const authHeader = req.headers['auth-token'] || req.headers['authorization'];
-  const accessToken = authHeader.split(' ')[1];
 
-  if(!accessToken) {
+  if(!authHeader) {
     // if no token, abort authentication
     res
       .status(401)
       .send({ auth: false, msg: 'access denied, no valid access token.' });
   }
+
+  const accessToken = authHeader.split(' ')[1];
 
   try {
     // verify token

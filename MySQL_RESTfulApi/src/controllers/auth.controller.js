@@ -18,6 +18,8 @@ const {
   generateRefreshToken,
 } = require('../utils/jwt-helpers');
 
+const { serverError } = require('../utils/handlers');
+
 // function to set up new user
 exports.register = async (req, res) => {
   // set parameters
@@ -30,28 +32,25 @@ exports.register = async (req, res) => {
   });
 
   // check if user already exists
-  const user = await query(con, GET_USER_BY_NAME, [req.body.username]).catch(
-    (err) => {
-      res.status(500);
-      res.send({ msg: 'unable to retrieve user.' });
-    }
-  );
+  const user = await query(con, GET_USER_BY_NAME(req.body.username)
+).catch(serverError(res));
 
   // if single response
-  if (user.length === 1) {
-    res.status(403).send({ msg: 'user already exists' });
+  if (!user.length) {
+    res
+      .status(403)
+      .send({ msg: 'user already exists' });
   } else {
     // add new user
-    const result = await query(con, INSERT_NEW_USER, params).catch((err) => {
-      //   stop registeration
-      res
-        .status(500)
-        .send({ msg: 'unable to register user, please try again' });
-    });
+    const user = await query(con, INSERT_NEW_USER, params)
+    .catch(serverError(res));
 
-    if (result.length) {
-      res.send({ msg: 'new user created' });
+    if (!result.length) {
+      res
+        .status(400)
+        .send({ msg: 'unable to save user' });
     }
+    res.json(user);
   }
 };
 
@@ -63,24 +62,30 @@ exports.login = async (req, res) => {
   });
 
   // check for existing user first
-  const user = await query(con, GET_USER_WITH_PASSWORD_BY_NAME, [
-    req.body.username,
-  ]).catch((err) => {
-    res.status(500);
-    res.send({ msg: 'unable to retrieve user' });
-  });
+  const user = await query(
+      con, 
+      GET_USER_WITH_PASSWORD_BY_NAME(req.body.username)
+  ).catch(serverError(res));
+    /*res
+      .status(500)
+      .send({ msg: 'unable to retrieve user' })
+  );*/
 
   // if the user exists
-  if (user.length === 1) {
+  if (!user.length) {
+    res
+      .status(500)
+      .send({ msg: 'unable to retrieve user' });
+  } else {
     //   compare entered password with saved password from db
     const validPass = await bcrypt
       .compare(req.body.password, user[0].password)
-      .catch((err) => {
-        res.json(500).json({ msg: 'invalid password!' });
-      });
+      .catch(serverError(res));
 
     if (!validPass) {
-      res.status(400).send({ msg: 'invalid password!' });
+      res
+        .status(400)
+        .send({ message: 'invalid password' });
     }
     // create token
     const accessToken = generateAccessToken(user[0].user_id, {
@@ -119,7 +124,9 @@ exports.token = (req, res) => {
 
   // stop refresh if refresh token invalid
   if (!refreshTokens.includes(refreshToken)) {
-    res.status(403).send({ msg: 'invalid refresh token' });
+    res
+      .status(403)
+      .json({ msg: 'invalid refresh token' });
   }
 
   const verified = verifyToken(refreshToken, jwtconfig.refresh, req, res);
@@ -137,7 +144,10 @@ exports.token = (req, res) => {
         refresh_token: refreshToken,
       });
   }
-  res.status(403).send({ msg: 'invalid token' });
+  // if bad token
+  res
+    .status(403)
+    .send({ msg: 'invalid token' });
 };
 
 // function to log out user

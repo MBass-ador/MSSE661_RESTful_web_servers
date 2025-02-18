@@ -1,13 +1,17 @@
-// Definng SQL queries for mysql database
+// Defing SQL queries for mysql database
 
 // create a table "tests" 
 // with id(pk), name, created_date, and status columns
 exports.CREATE_TESTING_TABLE = `CREATE TABLE IF NOT EXISTS testing (
-    id int NOT NULL AUTO_INCREMENT,
-    name varchar(255) NOT NULL,
+    TestId int NOT NULL AUTO_INCREMENT,
+    user_id int NOT NULL,
+    testName varchar(255) NOT NULL,
     created_date DATETIME DEFAULT CURRENT_TIMESTAMP(),
     status varchar(10) DEFAULT 'pending',
-    PRIMARY KEY (id)
+    PRIMARY KEY (testId)
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 )`;
 
 // retrieve all tests

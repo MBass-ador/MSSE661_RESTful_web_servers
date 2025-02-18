@@ -9,35 +9,36 @@ const {
   GET_USER_WITH_PASSWORD_BY_ID,
 } = require('../queries/user.queries');
 
-const {UPDATE_USER} = require('../queries/auth.queries');
+const { UPDATE_USER } = require('../queries/auth.queries');
+
+const { serverError } = require("../utils/handlers");
+
 
 // get token
 exports.getMe = async (req, res) => {
   // verify token
-  const decoded = req.user;
+  const user = req.user;
 
   // result of middleware check
-  if(decoded.id) {
+  if(user.id) {
     // make connection
     const con = await connection().catch((err) => {
       throw err;
-    }
-  );
+  });
 
-  const user = await query(con, GET_USER_BY_ID, [decoded.id]).catch(
-    (err) => {
-      res.status(500);
-      res.send({ msg: 'unable to retrieve user.' });
-    }
-  );
+  const user = await query(con, GET_USER_BY_ID(req.user.user_id)
+  ).catch(serverError(res));
+    
 
   if (!user.length) {
-    res.status(400);
-    res.send({ msg: 'no user found' });
+    res
+      .status(400)
+      .json({ msg: 'user not found' });
   }
-  res.status(200).send(user);
+  res.json(user);
   }
 };
+
 
 exports.updateMe = async (req, res) => {
   // make connection
@@ -46,21 +47,15 @@ exports.updateMe = async (req, res) => {
   });
 
   // check if user exists
-  const user = await query(con, GET_USER_WITH_PASSWORD_BY_ID, 
-    [req.user.id]).catch(
-    (err) => {
-      res.status(500);
-      res.send({ msg: 'unable to retrieve user' });
-    }
-  );
+  const user = await query(
+    con, 
+    GET_USER_WITH_PASSWORD_BY_ID(req.user.user_id)
+  ).catch(serverError(res));
 
   // check for valid password
   const validPass = await bcrypt
     .compare(req.body.password, user[0].password)
-    .catch((err) => {
-      res.json(500)
-      .json({ msg: 'invalid password' });
-    });
+    .catch(serverError(res));
 
     if (!validPass) {
       const passwordHash = bcrypt.hashSync(req.body.password);
@@ -71,13 +66,13 @@ exports.updateMe = async (req, res) => {
         req.body.email,
         passwordHash,
         user[0].user_id,
-      ]).catch((err) => {
-        res.status(500).send({ msg: 'unable to update user data' });
-      });
+      ]).catch(serverError(res));
       
       if (result.affectedRows === 1) {
-        res.json({ msg: 'user updated successfully' });
+        res
+          .status(500)
+        .json({ msg: `not able to update user details '${req.body.user_id}'`});
       }
-      res.json({ msg: 'no matching user to update'})
+      res.json(result)
     }
 };
