@@ -3,7 +3,7 @@
 // create a table "tests" 
 // with id(pk), name, created_date, and status columns
 exports.CREATE_TESTING_TABLE = `CREATE TABLE IF NOT EXISTS testing (
-    TestId int NOT NULL AUTO_INCREMENT,
+    testId int NOT NULL AUTO_INCREMENT,
     user_id int NOT NULL,
     testName varchar(255) NOT NULL,
     created_date DATETIME DEFAULT CURRENT_TIMESTAMP(),
