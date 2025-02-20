@@ -1,5 +1,5 @@
 {
-  "name": "week4webserver",
+  "name": "week5webserver",
   "version": "1.0.0",
   "description": "RESTful API with MySQL",
   "main": "index.js",
@@ -7,19 +7,23 @@
     "start": "nodemon ./src",
     "test": "NODE_ENV='test' mocha ./tests/*"
   },
+  
   "author": "Matthew Bass",
   "license": "ISC",
+
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
+    "moca": "^0.4.3",
     "morgan": "^1.9.1",
     "mysql2": "^3.12.0"
   },
+
   "devDependencies": {
-    "chai": "^5.1.2",
+    "chai": "^5.2.0",
     "chai-http": "^5.1.1",
     "mocha": "^11.1.0",
     "nodemon": "^2.0.2"
