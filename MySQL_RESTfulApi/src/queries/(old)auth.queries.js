@@ -1,3 +1,6 @@
+// not used in this program version
+// functionality moved to "user.queries"
+
 // create new table:  user_id(pk), username, email, password
 exports.CREATE_USERS_TABLE = `CREATE TABLE IF NOT EXISTS users(
     user_id int NOT NULL AUTO_INCREMENT,

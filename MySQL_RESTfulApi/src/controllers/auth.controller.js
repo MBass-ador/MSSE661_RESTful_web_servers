@@ -3,11 +3,10 @@ const bcrypt = require('bcryptjs');
 
 const connection = require('../db-config');
 
-const {INSERT_NEW_USER} = require('../queries/auth.queries');
-
 const {
   GET_USER_BY_NAME,
-  GET_USER_WITH_PASSWORD_BY_NAME
+  GET_USER_WITH_PASSWORD_BY_NAME,
+  INSERT_NEW_USER
 } = require('../queries/user.queries');
 
 const query = require('../utils/query');
@@ -54,6 +53,7 @@ exports.register = async (req, res) => {
   }
 };
 
+
 // function to log in user
 exports.login = async (req, res) => {
   // establish a connection
@@ -66,12 +66,9 @@ exports.login = async (req, res) => {
       con, 
       GET_USER_WITH_PASSWORD_BY_NAME(req.body.username)
   ).catch(serverError(res));
-    /*res
-      .status(500)
-      .send({ msg: 'unable to retrieve user' })
-  );*/
+    
 
-  // if the user exists
+  // if the user does not exist
   if (!user.length) {
     res
       .status(500)
@@ -81,7 +78,7 @@ exports.login = async (req, res) => {
     const validPass = await bcrypt
       .compare(req.body.password, user[0].password)
       .catch(serverError(res));
-
+    // if password invalid
     if (!validPass) {
       res
         .status(400)
